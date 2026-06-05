@@ -125,7 +125,7 @@ function buildMonthlyIncome_(ss){
     [2,3,4].forEach(function(c){sh.getRange(item.r,c).setNumberFormat('#,##0.00');});
   });
 
-  sh.setColumnWidths(1,4,[200,130,130,100]);
+  [200,130,130,100].forEach(function(w,i){sh.setColumnWidth(i+1,w);});
   sh.setFrozenRows(3);sh.setTabColor('#1B5E20');
 }
 
@@ -197,7 +197,7 @@ function buildDashboard_(ss){
     sh.getRange(mr,4).setFormula('=B'+mr+'-C'+mr).setNumberFormat('#,##0');
   }
 
-  sh.setColumnWidths(1,4,[200,150,150,120]);
+  [200,150,150,120].forEach(function(w,i){sh.setColumnWidth(i+1,w);});
   sh.setFrozenRows(2);sh.setTabColor(C.pri);
 }
 

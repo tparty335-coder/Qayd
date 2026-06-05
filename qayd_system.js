@@ -160,7 +160,8 @@ function buildEntryLog_(ss){
   var headers=['ط§ظ„طھط§ط±ظٹط®','ط§ظ„ط¨ظٹط§ظ†','ظ†ظˆط¹ ط§ظ„ط­ط±ظƒط©','ط§ظ„ظ…ط¨ظ„ط؛','ط§ظ„طھطµظ†ظٹظپ','ط§ظ„ظ…طµط¯ط±','ط§ظ„ظ…ط´ط±ظˆط¹','ط§ظ„ط·ط±ظپ ط§ظ„ظ…ظ‚ط§ط¨ظ„','#','ط§ظ„ط´ظ‡ط±'];
   sh.getRange(3,1,1,10).setValues([headers]);
   fmtH_(sh,3,10,C.drk);
-  sh.setColumnWidths(1,10,[110,250,80,120,180,120,130,150,40,80]);
+  var widths=[110,250,80,120,180,120,130,150,40,80];
+  for(var w=0;w<widths.length;w++) sh.setColumnWidth(w+1,widths[w]);
 
   // Data validation dropdowns
   var DR=1000;
@@ -460,7 +461,7 @@ function buildMonthlyIncome_(ss){
     [2,3,4].forEach(function(c){sh.getRange(item.r,c).setNumberFormat('#,##0.00');});
   });
 
-  sh.setColumnWidths(1,4,[200,130,130,100]);
+  [200,130,130,100].forEach(function(w,i){sh.setColumnWidth(i+1,w);});
   sh.setFrozenRows(3);sh.setTabColor('#1B5E20');
 }
 
@@ -532,7 +533,7 @@ function buildDashboard_(ss){
     sh.getRange(mr,4).setFormula('=B'+mr+'-C'+mr).setNumberFormat('#,##0');
   }
 
-  sh.setColumnWidths(1,4,[200,150,150,120]);
+  [200,150,150,120].forEach(function(w,i){sh.setColumnWidth(i+1,w);});
   sh.setFrozenRows(2);sh.setTabColor(C.pri);
 }
 

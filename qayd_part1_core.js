@@ -160,7 +160,8 @@ function buildEntryLog_(ss){
   var headers=['التاريخ','البيان','نوع الحركة','المبلغ','التصنيف','المصدر','المشروع','الطرف المقابل','#','الشهر'];
   sh.getRange(3,1,1,10).setValues([headers]);
   fmtH_(sh,3,10,C.drk);
-  sh.setColumnWidths(1,10,[110,250,80,120,180,120,130,150,40,80]);
+  var widths=[110,250,80,120,180,120,130,150,40,80];
+  for(var w=0;w<widths.length;w++) sh.setColumnWidth(w+1,widths[w]);
 
   // Data validation dropdowns
   var DR=1000;
