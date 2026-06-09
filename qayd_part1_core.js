@@ -116,12 +116,17 @@ function buildSettings_(ss){
   var ents=['إعمار','مسار','الفرع الرياض'];
   for(var n=0;n<ents.length;n++) sh.getRange(ir+1+n,1).setValue(n+1), sh.getRange(ir+1+n,2).setValue(ents[n]);
 
-  // Named ranges
-  ss.setNamedRange('rng_ExpCats',sh.getRange(7,2,cats.length,1));
-  ss.setNamedRange('rng_RevCats',sh.getRange(rr+1,2,revs.length,1));
-  ss.setNamedRange('rng_Projects',sh.getRange(pr+2,2,projs.length,1));
-  ss.setNamedRange('rng_Employees',sh.getRange(er+1,2,emps.length,1));
-  ss.setNamedRange('rng_Entities',sh.getRange(ir+1,2,ents.length,1));
+  // Safe named range upsert — update if exists, create if not
+  function setNR_(name,range){
+    var existing=ss.getNamedRanges().filter(function(n){return n.getName()===name;});
+    if(existing.length>0) existing[0].setRange(range);
+    else ss.setNamedRange(name,range);
+  }
+  setNR_('rng_ExpCats',sh.getRange(7,2,cats.length,1));
+  setNR_('rng_RevCats',sh.getRange(rr+1,2,revs.length,1));
+  setNR_('rng_Projects',sh.getRange(pr+2,2,projs.length,1));
+  setNR_('rng_Employees',sh.getRange(er+1,2,emps.length,1));
+  setNR_('rng_Entities',sh.getRange(ir+1,2,ents.length,1));
 
   sh.setColumnWidth(1,50);sh.setColumnWidth(2,220);sh.setColumnWidth(3,160);
   sh.setTabColor(C.pri);

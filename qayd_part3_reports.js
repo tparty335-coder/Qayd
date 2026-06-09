@@ -54,8 +54,9 @@ function buildWeeklyIncome_(ss){
 
     if(item.cat){
       var sign=item.neg?-1:1;
+      // INT() wraps dates to handle both Date objects and text-entered dates
       sh.getRange(item.r,2).setFormula(
-        '=SUMPRODUCT(('+e+'A$4:A$1003>='+from+')*('+e+'A$4:A$1003<='+to+')*('+e+'E$4:E$1003="'+item.cat+'")*('+e+'C$4:C$1003="'+item.type+'")*'+e+'D$4:D$1003)*'+sign
+        '=SUMPRODUCT((INT('+e+'A$4:A$1003)>=INT('+from+'))*(INT('+e+'A$4:A$1003)<=INT('+to+'))*('+e+'E$4:E$1003="'+item.cat+'")*('+e+'C$4:C$1003="'+item.type+'")*'+e+'D$4:D$1003)*'+sign
       );
     }
     if(item.sum&&!item.sub) sh.getRange(item.r,2).setFormula('=SUM('+item.sum+')');
@@ -95,7 +96,7 @@ function buildMonthlyIncome_(ss){
     {r:11,l:'محروقات',type:'صادر',cat:'محروقات (بنزين+زيت+ديزل)'},
     {r:12,l:'إيجارات',type:'صادر',cat:'إيجارات'},
     {r:13,l:'مصروفات إدارية',type:'صادر',cat:'مصروفات إدارية عامة'},
-    {r:14,l:'مصروفات أخرى',type:'صادر',other:true},
+    {r:14,l:'مصروفات أخرى',type:'صادر',cat:'مصروفات متنوعة'},
     {r:15,l:'إجمالي المصروفات',formula:'=SUM(B9:B14)',bold:true,bg:C.lRed},
     {r:17,l:'صافي الدخل',formula:'=B7-B15',bold:true,big:true,bg:'#1B5E20',color:C.wht},
   ];
@@ -155,10 +156,14 @@ function buildDashboard_(ss){
 
   var bals=[['الصندوق','صندوق'],['بنك الراجحي','بنك الراجحي'],['بنك الأهلي','بنك الأهلي']];
   for(var i=0;i<bals.length;i++){
-    var r=4+i;
+    var r=4+i,src=bals[i][1];
     sh.getRange(r,1).setValue(bals[i][0]).setFontWeight('bold').setFontSize(12);
+    // Include مردود (adds) and exclude تحويل (deducts) — matches entry log balance logic
     sh.getRange(r,2).setFormula(
-      '=SUMIFS('+e+'D$4:D$1003,'+e+'F$4:F$1003,"'+bals[i][1]+'",'+e+'C$4:C$1003,"وارد")-SUMIFS('+e+'D$4:D$1003,'+e+'F$4:F$1003,"'+bals[i][1]+'",'+e+'C$4:C$1003,"صادر")'
+      '=SUMIFS('+e+'D$4:D$1003,'+e+'F$4:F$1003,"'+src+'",'+e+'C$4:C$1003,"وارد")'+
+      '+SUMIFS('+e+'D$4:D$1003,'+e+'F$4:F$1003,"'+src+'",'+e+'C$4:C$1003,"مردود")'+
+      '-SUMIFS('+e+'D$4:D$1003,'+e+'F$4:F$1003,"'+src+'",'+e+'C$4:C$1003,"صادر")'+
+      '-SUMIFS('+e+'D$4:D$1003,'+e+'F$4:F$1003,"'+src+'",'+e+'C$4:C$1003,"تحويل")'
     ).setFontSize(14).setFontWeight('bold').setNumberFormat('#,##0.00');
   }
   sh.getRange(7,1).setValue('📊 الرصيد الكلي').setFontWeight('bold').setFontSize(13).setBackground(C.lYlw);
@@ -231,9 +236,10 @@ function protectQayd(){
     p.getEditors().forEach(function(e){if(e.getEmail()!==me.getEmail())p.removeEditor(e);});
     cnt++;
   });
-  // Protect formulas in entry sheet
+  // Protect formulas in entry sheet — remove old protection first to avoid duplicates
   var entry=ss.getSheetByName(SN.entry);
   if(entry){
+    entry.getProtections(SpreadsheetApp.ProtectionType.SHEET).forEach(function(p){p.remove();});
     var p=entry.protect().setDescription('حماية معادلات الإدخال');
     p.addEditor(me);
     var unp=[];
