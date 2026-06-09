@@ -108,20 +108,32 @@ function buildMonthlyIncome_(ss){
     if(item.big) sh.getRange(item.r,2,1,3).setFontSize(13);
 
     if(item.type&&!item.cat){
+      // Cash basis: exclude آجلة sales
       sh.getRange(item.r,2).setFormula(
+        '=SUMPRODUCT(('+e+'J$4:J$1003='+mo+')*('+e+'C$4:C$1003="'+item.type+'")*('+e+'E$4:E$1003<>"مبيعات آجلة")*'+e+'D$4:D$1003)'+(item.neg?'*-1':'')
+      );
+      // Accrual basis: include ALL (including آجلة)
+      sh.getRange(item.r,3).setFormula(
         '=SUMPRODUCT(('+e+'J$4:J$1003='+mo+')*('+e+'C$4:C$1003="'+item.type+'")*'+e+'D$4:D$1003)'+(item.neg?'*-1':'')
       );
     }
     if(item.cat){
+      // Cash basis: same category filter
       sh.getRange(item.r,2).setFormula(
         '=SUMPRODUCT(('+e+'J$4:J$1003='+mo+')*('+e+'E$4:E$1003="'+item.cat+'")*('+e+'C$4:C$1003="'+item.type+'")*'+e+'D$4:D$1003)'
       );
+      // Accrual basis: same for expenses (no distinction yet)
+      sh.getRange(item.r,3).setFormula(
+        '=SUMPRODUCT(('+e+'J$4:J$1003='+mo+')*('+e+'E$4:E$1003="'+item.cat+'")*('+e+'C$4:C$1003="'+item.type+'")*'+e+'D$4:D$1003)'
+      );
     }
-    if(item.formula) sh.getRange(item.r,2).setFormula(item.formula);
+    if(item.formula){
+      sh.getRange(item.r,2).setFormula(item.formula);
+      // Accrual totals mirror the structure but from col C
+      sh.getRange(item.r,3).setFormula(item.formula.replace(/B/g,'C'));
+    }
 
-    // Accrual column = same for now (can be customized)
-    sh.getRange(item.r,3).setFormula('=B'+item.r);
-    sh.getRange(item.r,4).setFormula('=B'+item.r+'-C'+item.r);
+    sh.getRange(item.r,4).setFormula('=C'+item.r+'-B'+item.r);
     [2,3,4].forEach(function(c){sh.getRange(item.r,c).setNumberFormat('#,##0.00');});
   });
 
@@ -168,7 +180,11 @@ function buildDashboard_(ss){
     sh.getRange(kr,1).setValue(kpis[k][0]).setFontWeight('bold');
     sh.getRange(kr,2).setFormula(kpis[k][1]).setFontWeight('bold').setNumberFormat('#,##0.00');
   }
-  sh.getRange(12,2).setFontSize(16).setBackground(sh.getRange(12,2).getFormula().indexOf('-')>-1?C.lRed:C.lGrn);
+  // Conditional formatting for net income: green if positive, red if negative
+  var netIncomeRange=sh.getRange('B12');
+  var rulePos=SpreadsheetApp.newConditionalFormatRule().whenNumberGreaterThan(0).setBackground(C.lGrn).setRanges([netIncomeRange]).build();
+  var ruleNeg=SpreadsheetApp.newConditionalFormatRule().whenNumberLessThan(0).setBackground(C.lRed).setRanges([netIncomeRange]).build();
+  sh.setConditionalFormatRules([rulePos,ruleNeg]);
 
   // ═ Section 3: Smart Alerts ═
   sh.getRange(16,1).setValue('🚨 تنبيهات ذكية').setFontSize(14).setFontWeight('bold');

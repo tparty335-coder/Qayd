@@ -10,10 +10,10 @@ function buildCashSheet_(ss){
   sh.getRange(1,1,1,8).merge().setBackground(C.pri).setFontColor(C.wht).setHorizontalAlignment('center');
   sh.getRange(2,1,1,8).setValues([['التاريخ','البيان','نوع','المبلغ','التصنيف','المشروع','الطرف','الرصيد']]);
   fmtH_(sh,2,8,C.drk);
-  // FILTER from entry log
+  // FILTER from entry log — pure FILTER, no QUERY wrapper (avoids Col1 type ambiguity)
   var e="'"+SN.entry+"'!";
   sh.getRange(3,1).setFormula(
-    '=IFERROR(QUERY(FILTER({'+e+'A4:A1003,'+e+'B4:B1003,'+e+'C4:C1003,'+e+'D4:D1003,'+e+'E4:E1003,'+e+'G4:G1003,'+e+'H4:H1003},'+e+'F4:F1003="صندوق",'+e+'A4:A1003<>""),"",0),"")'
+    '=IFERROR(SORT(FILTER({'+e+'A4:A1003,'+e+'B4:B1003,'+e+'C4:C1003,'+e+'D4:D1003,'+e+'E4:E1003,'+e+'G4:G1003,'+e+'H4:H1003},'+e+'F4:F1003="صندوق",'+e+'A4:A1003>0),1,TRUE),"")'
   );
   // Running balance
   batch_(sh,3,502,8,function(r){
@@ -34,7 +34,7 @@ function buildBankSheet_(ss,sheetName,bankLabel){
   fmtH_(sh,2,8,C.drk);
   var e="'"+SN.entry+"'!";
   sh.getRange(3,1).setFormula(
-    '=IFERROR(QUERY(FILTER({'+e+'A4:A1003,'+e+'B4:B1003,'+e+'C4:C1003,'+e+'D4:D1003,'+e+'E4:E1003,'+e+'G4:G1003,'+e+'H4:H1003},'+e+'F4:F1003="'+sheetName+'",'+e+'A4:A1003<>""),"",0),"")'
+    '=IFERROR(SORT(FILTER({'+e+'A4:A1003,'+e+'B4:B1003,'+e+'C4:C1003,'+e+'D4:D1003,'+e+'E4:E1003,'+e+'G4:G1003,'+e+'H4:H1003},'+e+'F4:F1003="'+sheetName+'",'+e+'A4:A1003>0),1,TRUE),"")'
   );
   batch_(sh,3,502,8,function(r){
     return '=IF(A'+r+'="","",SUMPRODUCT((A$3:A'+r+'<>"")*IF(C$3:C'+r+'="وارد",D$3:D'+r+',-D$3:D'+r+')))';
