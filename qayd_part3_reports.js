@@ -129,8 +129,8 @@ function buildMonthlyIncome_(ss){
     }
     if(item.formula){
       sh.getRange(item.r,2).setFormula(item.formula);
-      // Accrual totals mirror the structure but from col C
-      sh.getRange(item.r,3).setFormula(item.formula.replace(/B/g,'C'));
+      // Accrual totals: safely remap column B refs → C refs (only B followed by digit)
+      sh.getRange(item.r,3).setFormula(item.formula.replace(/B(\d)/g,'C$1'));
     }
 
     sh.getRange(item.r,4).setFormula('=C'+item.r+'-B'+item.r);

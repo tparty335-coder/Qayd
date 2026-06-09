@@ -15,9 +15,10 @@ function buildCashSheet_(ss){
   sh.getRange(3,1).setFormula(
     '=IFERROR(SORT(FILTER({'+e+'A4:A1003,'+e+'B4:B1003,'+e+'C4:C1003,'+e+'D4:D1003,'+e+'E4:E1003,'+e+'G4:G1003,'+e+'H4:H1003},'+e+'F4:F1003="صندوق",'+e+'A4:A1003>0),1,TRUE),"")'
   );
-  // Running balance
-  batch_(sh,3,502,8,function(r){
-    return '=IF(A'+r+'="","",SUMPRODUCT((A$3:A'+r+'<>"")*IF(C$3:C'+r+'="وارد",D$3:D'+r+',-D$3:D'+r+')))';
+  // Running balance — O(n) cumulative, handles وارد/مردود/صادر/تحويل
+  sh.getRange(3,8).setFormula('=IF(A3="","",IF(OR(C3="وارد",C3="مردود"),D3,-D3))');
+  batch_(sh,4,502,8,function(r){
+    return '=IF(A'+r+'="","",H'+(r-1)+'+IF(OR(C'+r+'="وارد",C'+r+'="مردود"),D'+r+',-D'+r+'))';
   });
   sh.getRange(3,1,500,1).setNumberFormat('yyyy-mm-dd');
   sh.getRange(3,4,500,1).setNumberFormat('#,##0.00');
@@ -36,8 +37,9 @@ function buildBankSheet_(ss,sheetName,bankLabel){
   sh.getRange(3,1).setFormula(
     '=IFERROR(SORT(FILTER({'+e+'A4:A1003,'+e+'B4:B1003,'+e+'C4:C1003,'+e+'D4:D1003,'+e+'E4:E1003,'+e+'G4:G1003,'+e+'H4:H1003},'+e+'F4:F1003="'+sheetName+'",'+e+'A4:A1003>0),1,TRUE),"")'
   );
-  batch_(sh,3,502,8,function(r){
-    return '=IF(A'+r+'="","",SUMPRODUCT((A$3:A'+r+'<>"")*IF(C$3:C'+r+'="وارد",D$3:D'+r+',-D$3:D'+r+')))';
+  sh.getRange(3,8).setFormula('=IF(A3="","",IF(OR(C3="وارد",C3="مردود"),D3,-D3))');
+  batch_(sh,4,502,8,function(r){
+    return '=IF(A'+r+'="","",H'+(r-1)+'+IF(OR(C'+r+'="وارد",C'+r+'="مردود"),D'+r+',-D'+r+'))';
   });
   sh.getRange(3,1,500,1).setNumberFormat('yyyy-mm-dd');
   sh.getRange(3,4,500,1).setNumberFormat('#,##0.00');
@@ -53,7 +55,8 @@ function buildProjectsSummary_(ss){
   sh.getRange(2,1,1,8).setValues([['المشروع','إيرادات','مصروفات','صافي ربح/خسارة','نسبة الربح %','عدد الحركات','آخر حركة','حالة']]);
   fmtH_(sh,2,8,C.drk);
   var e="'"+SN.entry+"'!";
-  var projs=['مشروع السجون','مشروع المزاحمية','فلل جدة','مشروع الرمال'];
+  var projRange=ss.getRangeByName('rng_Projects');
+  var projs=projRange?projRange.getValues().map(function(r){return r[0];}).filter(function(v){return v!=='';}):[];
   for(var i=0;i<projs.length;i++){
     var r=3+i,p=projs[i];
     sh.getRange(r,1).setValue(p);
@@ -64,6 +67,14 @@ function buildProjectsSummary_(ss){
     sh.getRange(r,6).setFormula('=COUNTIF('+e+'G$4:G$1003,"'+p+'")');
     sh.getRange(r,7).setFormula('=IFERROR(INDEX('+e+'A$4:A$1003,MATCH(2,1/('+e+'G$4:G$1003="'+p+'"),1)),"")').setNumberFormat('yyyy-mm-dd');
     sh.getRange(r,8).setFormula('=IF(D'+r+'>0,"✅ ربح",IF(D'+r+'<0,"❌ خسارة","⚪ متعادل"))');
+  }
+  // Total row
+  if(projs.length>0){
+    var tr=3+projs.length;
+    sh.getRange(tr,1).setValue('الإجمالي').setFontWeight('bold').setBackground(C.lYlw);
+    sh.getRange(tr,2).setFormula('=SUM(B3:B'+(tr-1)+')').setFontWeight('bold').setNumberFormat('#,##0.00');
+    sh.getRange(tr,3).setFormula('=SUM(C3:C'+(tr-1)+')').setFontWeight('bold').setNumberFormat('#,##0.00');
+    sh.getRange(tr,4).setFormula('=B'+tr+'-C'+tr).setFontWeight('bold').setNumberFormat('#,##0.00').setFontSize(12);
   }
   sh.setFrozenRows(2);sh.setTabColor('#FF6F00');
 }
@@ -76,7 +87,8 @@ function buildCustodySheet_(ss){
   sh.getRange(2,1,1,5).setValues([['الموظف','عهد مسلمة','عهد مسواة','رصيد عهدة','حالة']]);
   fmtH_(sh,2,5,C.drk);
   var e="'"+SN.entry+"'!";
-  var emps=['سعدية','طارق','محمد فهيم','أحمد','عبدالله'];
+  var empRange=ss.getRangeByName('rng_Employees');
+  var emps=empRange?empRange.getValues().map(function(r){return r[0];}).filter(function(v){return v!=='';}):[];
   for(var i=0;i<emps.length;i++){
     var r=3+i,emp=emps[i];
     sh.getRange(r,1).setValue(emp);
@@ -96,7 +108,8 @@ function buildIntercoSheet_(ss){
   sh.getRange(2,1,1,5).setValues([['الكيان','له (وارد)','عليه (صادر)','الرصيد الصافي','الاتجاه']]);
   fmtH_(sh,2,5,C.drk);
   var e="'"+SN.entry+"'!";
-  var ents=['إعمار','مسار','الفرع الرياض'];
+  var entRange=ss.getRangeByName('rng_Entities');
+  var ents=entRange?entRange.getValues().map(function(r){return r[0];}).filter(function(v){return v!=='';}):[];
   for(var i=0;i<ents.length;i++){
     var r=3+i,ent=ents[i];
     sh.getRange(r,1).setValue(ent);

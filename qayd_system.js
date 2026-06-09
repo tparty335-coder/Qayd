@@ -123,7 +123,7 @@ function buildSettings_(ss){
   ss.setNamedRange('rng_Employees',sh.getRange(er+1,2,emps.length,1));
   ss.setNamedRange('rng_Entities',sh.getRange(ir+1,2,ents.length,1));
 
-  sh.setColumnWidth(1,30);sh.setColumnWidth(2,220);sh.setColumnWidth(3,160);
+  sh.setColumnWidth(1,50);sh.setColumnWidth(2,220);sh.setColumnWidth(3,160);
   sh.setTabColor(C.pri);
 }
 
@@ -142,9 +142,9 @@ function buildEntryLog_(ss){
 
   // Live balance bar (row 2) — instant feedback while entering
   var balItems=[
-    {l:'💰 الصندوق',f:"=SUMIFS(D4:D1003,F4:F1003,\"صندوق\",C4:C1003,\"وارد\")-SUMIFS(D4:D1003,F4:F1003,\"صندوق\",C4:C1003,\"صادر\")"},
-    {l:'🏦 الراجحي',f:"=SUMIFS(D4:D1003,F4:F1003,\"بنك الراجحي\",C4:C1003,\"وارد\")-SUMIFS(D4:D1003,F4:F1003,\"بنك الراجحي\",C4:C1003,\"صادر\")"},
-    {l:'🏦 الأهلي',f:"=SUMIFS(D4:D1003,F4:F1003,\"بنك الأهلي\",C4:C1003,\"وارد\")-SUMIFS(D4:D1003,F4:F1003,\"بنك الأهلي\",C4:C1003,\"صادر\")"},
+    {l:'💰 الصندوق',f:"=SUMIFS(D4:D1003,F4:F1003,\"صندوق\",C4:C1003,\"وارد\")+SUMIFS(D4:D1003,F4:F1003,\"صندوق\",C4:C1003,\"مردود\")-SUMIFS(D4:D1003,F4:F1003,\"صندوق\",C4:C1003,\"صادر\")-SUMIFS(D4:D1003,F4:F1003,\"صندوق\",C4:C1003,\"تحويل\")"},
+    {l:'🏦 الراجحي',f:"=SUMIFS(D4:D1003,F4:F1003,\"بنك الراجحي\",C4:C1003,\"وارد\")+SUMIFS(D4:D1003,F4:F1003,\"بنك الراجحي\",C4:C1003,\"مردود\")-SUMIFS(D4:D1003,F4:F1003,\"بنك الراجحي\",C4:C1003,\"صادر\")-SUMIFS(D4:D1003,F4:F1003,\"بنك الراجحي\",C4:C1003,\"تحويل\")"},
+    {l:'🏦 الأهلي',f:"=SUMIFS(D4:D1003,F4:F1003,\"بنك الأهلي\",C4:C1003,\"وارد\")+SUMIFS(D4:D1003,F4:F1003,\"بنك الأهلي\",C4:C1003,\"مردود\")-SUMIFS(D4:D1003,F4:F1003,\"بنك الأهلي\",C4:C1003,\"صادر\")-SUMIFS(D4:D1003,F4:F1003,\"بنك الأهلي\",C4:C1003,\"تحويل\")"},
     {l:'📊 الإجمالي',f:"=B2+D2+F2"}
   ];
   for(var b=0;b<balItems.length;b++){
@@ -201,29 +201,29 @@ function buildEntryLog_(ss){
   sh.setFrozenRows(3);
   sh.setTabColor(C.acc);
 
-  // ═══ EMBEDDED SUMMARY — Below data (like Essam's style) ═══
-  var sumRow=4+DR+2;
-  sh.getRange(sumRow,1).setValue('📋 ملخص سريع').setFontSize(14).setFontWeight('bold');
-  sh.getRange(sumRow,1,1,8).merge().setBackground(C.pri).setFontColor(C.wht).setHorizontalAlignment('center');
+  // ═══ SIDE SUMMARY — Visible beside entry area (Essam's style) ═══
+  // Placed in columns L-O (12-15), always visible without scrolling
+  var sc=12; // start column (L)
+  sh.getRange(2,sc).setValue('📋 ملخص لحظي').setFontSize(12).setFontWeight('bold');
+  sh.getRange(2,sc,1,4).merge().setBackground(C.pri).setFontColor(C.wht).setHorizontalAlignment('center');
 
-  var sumHeaders=['التصنيف','إجمالي صادر','إجمالي وارد','الصافي'];
-  sh.getRange(sumRow+1,1,1,4).setValues([sumHeaders]).setFontWeight('bold').setBackground(C.hdr);
+  sh.getRange(3,sc,1,4).setValues([['التصنيف','صادر','وارد','الصافي']]).setFontWeight('bold').setBackground(C.hdr);
+  sh.setColumnWidth(sc,180);sh.setColumnWidth(sc+1,100);sh.setColumnWidth(sc+2,100);sh.setColumnWidth(sc+3,100);
 
-  // Auto summary per category
   var cats=['مصروفات إدارية عامة','محروقات (بنزين+زيت+ديزل)','وجبات ومشروبات','مشتريات عامة',
     'رواتب ويوميات وسلف','صيانة سيارات','إيجارات','مبيعات نقدية','مبيعات آجلة','إيرادات مشاريع'];
   for(var ci=0;ci<cats.length;ci++){
-    var cr=sumRow+2+ci;
-    sh.getRange(cr,1).setValue(cats[ci]);
-    sh.getRange(cr,2).setFormula('=SUMIFS(D$4:D$1003,E$4:E$1003,"'+cats[ci]+'",C$4:C$1003,"صادر")').setNumberFormat('#,##0.00');
-    sh.getRange(cr,3).setFormula('=SUMIFS(D$4:D$1003,E$4:E$1003,"'+cats[ci]+'",C$4:C$1003,"وارد")').setNumberFormat('#,##0.00');
-    sh.getRange(cr,4).setFormula('=C'+cr+'-B'+cr).setNumberFormat('#,##0.00');
+    var cr=4+ci;
+    sh.getRange(cr,sc).setValue(cats[ci]);
+    sh.getRange(cr,sc+1).setFormula('=SUMIFS(D$4:D$1003,E$4:E$1003,"'+cats[ci]+'",C$4:C$1003,"صادر")').setNumberFormat('#,##0.00');
+    sh.getRange(cr,sc+2).setFormula('=SUMIFS(D$4:D$1003,E$4:E$1003,"'+cats[ci]+'",C$4:C$1003,"وارد")').setNumberFormat('#,##0.00');
+    sh.getRange(cr,sc+3).setFormula('=N'+cr+'-M'+cr).setNumberFormat('#,##0.00');
   }
-  var totR=sumRow+2+cats.length;
-  sh.getRange(totR,1).setValue('الإجمالي الكلي').setFontWeight('bold').setBackground(C.lYlw);
-  sh.getRange(totR,2).setFormula('=SUM(B'+(sumRow+2)+':B'+(totR-1)+')').setFontWeight('bold').setNumberFormat('#,##0.00');
-  sh.getRange(totR,3).setFormula('=SUM(C'+(sumRow+2)+':C'+(totR-1)+')').setFontWeight('bold').setNumberFormat('#,##0.00');
-  sh.getRange(totR,4).setFormula('=C'+totR+'-B'+totR).setFontWeight('bold').setNumberFormat('#,##0.00').setFontSize(12);
+  var totR=4+cats.length;
+  sh.getRange(totR,sc).setValue('الإجمالي الكلي').setFontWeight('bold').setBackground(C.lYlw);
+  sh.getRange(totR,sc+1).setFormula('=SUM(M4:M'+(totR-1)+')').setFontWeight('bold').setNumberFormat('#,##0.00');
+  sh.getRange(totR,sc+2).setFormula('=SUM(N4:N'+(totR-1)+')').setFontWeight('bold').setNumberFormat('#,##0.00');
+  sh.getRange(totR,sc+3).setFormula('=N'+totR+'-M'+totR).setFontWeight('bold').setNumberFormat('#,##0.00').setFontSize(12);
 }
 
 // ══════════════════════════════════════════════════════
@@ -243,9 +243,10 @@ function buildCashSheet_(ss){
   sh.getRange(3,1).setFormula(
     '=IFERROR(SORT(FILTER({'+e+'A4:A1003,'+e+'B4:B1003,'+e+'C4:C1003,'+e+'D4:D1003,'+e+'E4:E1003,'+e+'G4:G1003,'+e+'H4:H1003},'+e+'F4:F1003="صندوق",'+e+'A4:A1003>0),1,TRUE),"")'
   );
-  // Running balance
-  batch_(sh,3,502,8,function(r){
-    return '=IF(A'+r+'="","",SUMPRODUCT((A$3:A'+r+'<>"")*IF(C$3:C'+r+'="وارد",D$3:D'+r+',-D$3:D'+r+')))';
+  // Running balance — O(n) cumulative, handles وارد/مردود/صادر/تحويل
+  sh.getRange(3,8).setFormula('=IF(A3="","",IF(OR(C3="وارد",C3="مردود"),D3,-D3))');
+  batch_(sh,4,502,8,function(r){
+    return '=IF(A'+r+'="","",H'+(r-1)+'+IF(OR(C'+r+'="وارد",C'+r+'="مردود"),D'+r+',-D'+r+'))';
   });
   sh.getRange(3,1,500,1).setNumberFormat('yyyy-mm-dd');
   sh.getRange(3,4,500,1).setNumberFormat('#,##0.00');
@@ -264,8 +265,9 @@ function buildBankSheet_(ss,sheetName,bankLabel){
   sh.getRange(3,1).setFormula(
     '=IFERROR(SORT(FILTER({'+e+'A4:A1003,'+e+'B4:B1003,'+e+'C4:C1003,'+e+'D4:D1003,'+e+'E4:E1003,'+e+'G4:G1003,'+e+'H4:H1003},'+e+'F4:F1003="'+sheetName+'",'+e+'A4:A1003>0),1,TRUE),"")'
   );
-  batch_(sh,3,502,8,function(r){
-    return '=IF(A'+r+'="","",SUMPRODUCT((A$3:A'+r+'<>"")*IF(C$3:C'+r+'="وارد",D$3:D'+r+',-D$3:D'+r+')))';
+  sh.getRange(3,8).setFormula('=IF(A3="","",IF(OR(C3="وارد",C3="مردود"),D3,-D3))');
+  batch_(sh,4,502,8,function(r){
+    return '=IF(A'+r+'="","",H'+(r-1)+'+IF(OR(C'+r+'="وارد",C'+r+'="مردود"),D'+r+',-D'+r+'))';
   });
   sh.getRange(3,1,500,1).setNumberFormat('yyyy-mm-dd');
   sh.getRange(3,4,500,1).setNumberFormat('#,##0.00');
@@ -281,7 +283,8 @@ function buildProjectsSummary_(ss){
   sh.getRange(2,1,1,8).setValues([['المشروع','إيرادات','مصروفات','صافي ربح/خسارة','نسبة الربح %','عدد الحركات','آخر حركة','حالة']]);
   fmtH_(sh,2,8,C.drk);
   var e="'"+SN.entry+"'!";
-  var projs=['مشروع السجون','مشروع المزاحمية','فلل جدة','مشروع الرمال'];
+  var projRange=ss.getRangeByName('rng_Projects');
+  var projs=projRange?projRange.getValues().map(function(r){return r[0];}).filter(function(v){return v!=='';}):[];
   for(var i=0;i<projs.length;i++){
     var r=3+i,p=projs[i];
     sh.getRange(r,1).setValue(p);
@@ -292,6 +295,14 @@ function buildProjectsSummary_(ss){
     sh.getRange(r,6).setFormula('=COUNTIF('+e+'G$4:G$1003,"'+p+'")');
     sh.getRange(r,7).setFormula('=IFERROR(INDEX('+e+'A$4:A$1003,MATCH(2,1/('+e+'G$4:G$1003="'+p+'"),1)),"")').setNumberFormat('yyyy-mm-dd');
     sh.getRange(r,8).setFormula('=IF(D'+r+'>0,"✅ ربح",IF(D'+r+'<0,"❌ خسارة","⚪ متعادل"))');
+  }
+  // Total row
+  if(projs.length>0){
+    var tr=3+projs.length;
+    sh.getRange(tr,1).setValue('الإجمالي').setFontWeight('bold').setBackground(C.lYlw);
+    sh.getRange(tr,2).setFormula('=SUM(B3:B'+(tr-1)+')').setFontWeight('bold').setNumberFormat('#,##0.00');
+    sh.getRange(tr,3).setFormula('=SUM(C3:C'+(tr-1)+')').setFontWeight('bold').setNumberFormat('#,##0.00');
+    sh.getRange(tr,4).setFormula('=B'+tr+'-C'+tr).setFontWeight('bold').setNumberFormat('#,##0.00').setFontSize(12);
   }
   sh.setFrozenRows(2);sh.setTabColor('#FF6F00');
 }
@@ -304,7 +315,8 @@ function buildCustodySheet_(ss){
   sh.getRange(2,1,1,5).setValues([['الموظف','عهد مسلمة','عهد مسواة','رصيد عهدة','حالة']]);
   fmtH_(sh,2,5,C.drk);
   var e="'"+SN.entry+"'!";
-  var emps=['سعدية','طارق','محمد فهيم','أحمد','عبدالله'];
+  var empRange=ss.getRangeByName('rng_Employees');
+  var emps=empRange?empRange.getValues().map(function(r){return r[0];}).filter(function(v){return v!=='';}):[];
   for(var i=0;i<emps.length;i++){
     var r=3+i,emp=emps[i];
     sh.getRange(r,1).setValue(emp);
@@ -324,7 +336,8 @@ function buildIntercoSheet_(ss){
   sh.getRange(2,1,1,5).setValues([['الكيان','له (وارد)','عليه (صادر)','الرصيد الصافي','الاتجاه']]);
   fmtH_(sh,2,5,C.drk);
   var e="'"+SN.entry+"'!";
-  var ents=['إعمار','مسار','الفرع الرياض'];
+  var entRange=ss.getRangeByName('rng_Entities');
+  var ents=entRange?entRange.getValues().map(function(r){return r[0];}).filter(function(v){return v!=='';}):[];
   for(var i=0;i<ents.length;i++){
     var r=3+i,ent=ents[i];
     sh.getRange(r,1).setValue(ent);
@@ -467,8 +480,8 @@ function buildMonthlyIncome_(ss){
     }
     if(item.formula){
       sh.getRange(item.r,2).setFormula(item.formula);
-      // Accrual totals mirror the structure but from col C
-      sh.getRange(item.r,3).setFormula(item.formula.replace(/B/g,'C'));
+      // Accrual totals: safely remap column B refs → C refs (only B followed by digit)
+      sh.getRange(item.r,3).setFormula(item.formula.replace(/B(\d)/g,'C$1'));
     }
 
     sh.getRange(item.r,4).setFormula('=C'+item.r+'-B'+item.r);

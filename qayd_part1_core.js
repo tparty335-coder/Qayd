@@ -123,7 +123,7 @@ function buildSettings_(ss){
   ss.setNamedRange('rng_Employees',sh.getRange(er+1,2,emps.length,1));
   ss.setNamedRange('rng_Entities',sh.getRange(ir+1,2,ents.length,1));
 
-  sh.setColumnWidth(1,30);sh.setColumnWidth(2,220);sh.setColumnWidth(3,160);
+  sh.setColumnWidth(1,50);sh.setColumnWidth(2,220);sh.setColumnWidth(3,160);
   sh.setTabColor(C.pri);
 }
 
@@ -142,9 +142,9 @@ function buildEntryLog_(ss){
 
   // Live balance bar (row 2) — instant feedback while entering
   var balItems=[
-    {l:'💰 الصندوق',f:"=SUMIFS(D4:D1003,F4:F1003,\"صندوق\",C4:C1003,\"وارد\")-SUMIFS(D4:D1003,F4:F1003,\"صندوق\",C4:C1003,\"صادر\")"},
-    {l:'🏦 الراجحي',f:"=SUMIFS(D4:D1003,F4:F1003,\"بنك الراجحي\",C4:C1003,\"وارد\")-SUMIFS(D4:D1003,F4:F1003,\"بنك الراجحي\",C4:C1003,\"صادر\")"},
-    {l:'🏦 الأهلي',f:"=SUMIFS(D4:D1003,F4:F1003,\"بنك الأهلي\",C4:C1003,\"وارد\")-SUMIFS(D4:D1003,F4:F1003,\"بنك الأهلي\",C4:C1003,\"صادر\")"},
+    {l:'💰 الصندوق',f:"=SUMIFS(D4:D1003,F4:F1003,\"صندوق\",C4:C1003,\"وارد\")+SUMIFS(D4:D1003,F4:F1003,\"صندوق\",C4:C1003,\"مردود\")-SUMIFS(D4:D1003,F4:F1003,\"صندوق\",C4:C1003,\"صادر\")-SUMIFS(D4:D1003,F4:F1003,\"صندوق\",C4:C1003,\"تحويل\")"},
+    {l:'🏦 الراجحي',f:"=SUMIFS(D4:D1003,F4:F1003,\"بنك الراجحي\",C4:C1003,\"وارد\")+SUMIFS(D4:D1003,F4:F1003,\"بنك الراجحي\",C4:C1003,\"مردود\")-SUMIFS(D4:D1003,F4:F1003,\"بنك الراجحي\",C4:C1003,\"صادر\")-SUMIFS(D4:D1003,F4:F1003,\"بنك الراجحي\",C4:C1003,\"تحويل\")"},
+    {l:'🏦 الأهلي',f:"=SUMIFS(D4:D1003,F4:F1003,\"بنك الأهلي\",C4:C1003,\"وارد\")+SUMIFS(D4:D1003,F4:F1003,\"بنك الأهلي\",C4:C1003,\"مردود\")-SUMIFS(D4:D1003,F4:F1003,\"بنك الأهلي\",C4:C1003,\"صادر\")-SUMIFS(D4:D1003,F4:F1003,\"بنك الأهلي\",C4:C1003,\"تحويل\")"},
     {l:'📊 الإجمالي',f:"=B2+D2+F2"}
   ];
   for(var b=0;b<balItems.length;b++){
@@ -201,27 +201,27 @@ function buildEntryLog_(ss){
   sh.setFrozenRows(3);
   sh.setTabColor(C.acc);
 
-  // ═══ EMBEDDED SUMMARY — Below data (like Essam's style) ═══
-  var sumRow=4+DR+2;
-  sh.getRange(sumRow,1).setValue('📋 ملخص سريع').setFontSize(14).setFontWeight('bold');
-  sh.getRange(sumRow,1,1,8).merge().setBackground(C.pri).setFontColor(C.wht).setHorizontalAlignment('center');
+  // ═══ SIDE SUMMARY — Visible beside entry area (Essam's style) ═══
+  // Placed in columns L-O (12-15), always visible without scrolling
+  var sc=12; // start column (L)
+  sh.getRange(2,sc).setValue('📋 ملخص لحظي').setFontSize(12).setFontWeight('bold');
+  sh.getRange(2,sc,1,4).merge().setBackground(C.pri).setFontColor(C.wht).setHorizontalAlignment('center');
 
-  var sumHeaders=['التصنيف','إجمالي صادر','إجمالي وارد','الصافي'];
-  sh.getRange(sumRow+1,1,1,4).setValues([sumHeaders]).setFontWeight('bold').setBackground(C.hdr);
+  sh.getRange(3,sc,1,4).setValues([['التصنيف','صادر','وارد','الصافي']]).setFontWeight('bold').setBackground(C.hdr);
+  sh.setColumnWidth(sc,180);sh.setColumnWidth(sc+1,100);sh.setColumnWidth(sc+2,100);sh.setColumnWidth(sc+3,100);
 
-  // Auto summary per category
   var cats=['مصروفات إدارية عامة','محروقات (بنزين+زيت+ديزل)','وجبات ومشروبات','مشتريات عامة',
     'رواتب ويوميات وسلف','صيانة سيارات','إيجارات','مبيعات نقدية','مبيعات آجلة','إيرادات مشاريع'];
   for(var ci=0;ci<cats.length;ci++){
-    var cr=sumRow+2+ci;
-    sh.getRange(cr,1).setValue(cats[ci]);
-    sh.getRange(cr,2).setFormula('=SUMIFS(D$4:D$1003,E$4:E$1003,"'+cats[ci]+'",C$4:C$1003,"صادر")').setNumberFormat('#,##0.00');
-    sh.getRange(cr,3).setFormula('=SUMIFS(D$4:D$1003,E$4:E$1003,"'+cats[ci]+'",C$4:C$1003,"وارد")').setNumberFormat('#,##0.00');
-    sh.getRange(cr,4).setFormula('=C'+cr+'-B'+cr).setNumberFormat('#,##0.00');
+    var cr=4+ci;
+    sh.getRange(cr,sc).setValue(cats[ci]);
+    sh.getRange(cr,sc+1).setFormula('=SUMIFS(D$4:D$1003,E$4:E$1003,"'+cats[ci]+'",C$4:C$1003,"صادر")').setNumberFormat('#,##0.00');
+    sh.getRange(cr,sc+2).setFormula('=SUMIFS(D$4:D$1003,E$4:E$1003,"'+cats[ci]+'",C$4:C$1003,"وارد")').setNumberFormat('#,##0.00');
+    sh.getRange(cr,sc+3).setFormula('=N'+cr+'-M'+cr).setNumberFormat('#,##0.00');
   }
-  var totR=sumRow+2+cats.length;
-  sh.getRange(totR,1).setValue('الإجمالي الكلي').setFontWeight('bold').setBackground(C.lYlw);
-  sh.getRange(totR,2).setFormula('=SUM(B'+(sumRow+2)+':B'+(totR-1)+')').setFontWeight('bold').setNumberFormat('#,##0.00');
-  sh.getRange(totR,3).setFormula('=SUM(C'+(sumRow+2)+':C'+(totR-1)+')').setFontWeight('bold').setNumberFormat('#,##0.00');
-  sh.getRange(totR,4).setFormula('=C'+totR+'-B'+totR).setFontWeight('bold').setNumberFormat('#,##0.00').setFontSize(12);
+  var totR=4+cats.length;
+  sh.getRange(totR,sc).setValue('الإجمالي الكلي').setFontWeight('bold').setBackground(C.lYlw);
+  sh.getRange(totR,sc+1).setFormula('=SUM(M4:M'+(totR-1)+')').setFontWeight('bold').setNumberFormat('#,##0.00');
+  sh.getRange(totR,sc+2).setFormula('=SUM(N4:N'+(totR-1)+')').setFontWeight('bold').setNumberFormat('#,##0.00');
+  sh.getRange(totR,sc+3).setFormula('=N'+totR+'-M'+totR).setFontWeight('bold').setNumberFormat('#,##0.00').setFontSize(12);
 }
